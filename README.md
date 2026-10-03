@@ -12,10 +12,12 @@ API de agendamentos de pet shop e clínica veterinária, desenvolvida em Java co
 
 | Campo | Resultado |
 |---|---|
-| Total de bugs corrigidos | 12 / 12 |
+| Bugs do enunciado corrigidos | 12 / 12 |
+| Validações adicionais corrigidas | 2 / 2 |
 | Total de ajustes de Clean Code | 6 / 6 |
-| Total de testes novos escritos | 6 / 6 |
-| Suíte final | 26 testes, 0 falhas, 0 erros, 0 ignorados |
+| Testes novos do enunciado | 6 / 6 |
+| Testes das validações adicionais | 3 métodos parametrizados, 12 cenários |
+| Suíte final | 38 testes, 0 falhas, 0 erros, 0 ignorados |
 | Suíte original preservada | 20 testes, sem alterações |
 
 ## Parte 1 — Bugs encontrados
@@ -163,10 +165,11 @@ Verificação realizada com JDK 21.0.11 e Maven 3.9.15:
 | Verificação | Resultado |
 |---|---|
 | Estado original | 20 testes, 9 falhas, 0 erros |
-| Estado final — `mvn verify` | `BUILD SUCCESS`; 26 testes, 0 falhas, 0 erros, 0 ignorados |
+| Estado final — `mvn test` | 38 testes, 0 falhas, 0 erros, 0 ignorados |
 | SHA-256 das sete classes de teste originais | Idênticos aos arquivos recebidos |
-| SHA-256 de `pom.xml` e `application.properties` | Idênticos aos arquivos recebidos |
-| Histórico | Primeiro commit do estado original; 12 commits `fix`, 6 `refactor` e 6 `test`, um por item |
+| `pom.xml` e `application.properties` versionados | Preservados como recebidos; as credenciais locais não fazem parte dos commits |
+| Histórico do enunciado | Primeiro commit do estado original; 12 commits `fix`, 6 `refactor` e 6 `test`, um por item |
+| Histórico das validações adicionais | 2 commits `fix` e 2 commits `test`, separados por caso |
 | API com H2 em memória | Inicialização e persistência reais verificadas na porta 18085 |
 | Nove criações válidas: três serviços × três portes | HTTP 201, IDs gerados, status `AGENDADO` e protocolos sequenciais |
 | Resumos dos nove atendimentos | Preços, pontos e durações conforme o contrato |
@@ -174,7 +177,22 @@ Verificação realizada com JDK 21.0.11 e Maven 3.9.15:
 | Conclusão e cancelamento | HTTP 200 nas transições permitidas; HTTP 409 nas proibidas e repetidas |
 | ID inexistente | HTTP 404 na busca, no resumo, na conclusão e no cancelamento |
 | Data passada, tipo inexistente, nome/porte vazios e data malformada | HTTP 400 |
+| API com Oracle | 60 verificações do contrato passaram; os 11 registros temporários da verificação foram removidos |
+| Novas validações na API com H2 | 48 verificações HTTP passaram: 27 entradas inválidas recusadas sem persistência e 9 criações válidas preservadas |
 
-A validação com banco foi realizada usando H2; a conexão com o Oracle não foi executada. A validação de data passada ficou em `AgendaService.agendar()`, onde o contrato exige recusa antes de acessar o banco, permitindo construir e consultar registros históricos.
+A API foi verificada com H2 e com Oracle. As duas validações adicionais foram verificadas na nova versão usando H2 em memória. A validação de data passada ficou em `AgendaService.agendar()`, onde o contrato exige recusa antes de acessar o banco, permitindo construir e consultar registros históricos.
 
 O histórico permite observar a evolução: as sete primeiras correções eliminaram as nove falhas originais; quatro testes novos revelaram quatro outros bugs; a revisão do mapeamento JPA e a chamada real à API confirmaram o bug12. Os dois testes novos que passaram de primeira foram mantidos para prevenir regressões.
+
+### Validações adicionais encontradas na API
+
+Além dos 12 bugs do enunciado, a verificação com Oracle mostrou duas entradas indevidas que recebiam HTTP 201. As validações ficam em `AtendimentoBuilder.construir()`, antes da Factory e da persistência; o controller já converte `IllegalArgumentException` em HTTP 400.
+
+| # | Sintoma e causa raiz | Correção | Testes de regressão |
+|---|---|---|---|
+| bug13 | Um porte como `GIGANTE` era aceito, pois o Builder só verificava ausência e as subclasses tratavam qualquer outro valor como porte grande. | Validar o porte contra o conjunto imutável `PEQUENO`, `MEDIO` e `GRANDE`; recusar qualquer outro valor com mensagem clara. | `AtendimentoBuilderPorteTest`: quatro valores não reconhecidos recusados e os três portes permitidos preservados. |
+| bug14 | Nome de tutor vazio era salvo, pois `construir()` não validava `tutorNome`. | Recusar tutor nulo, vazio ou composto apenas por espaços em branco antes de criar o atendimento. | `AtendimentoBuilderTutorTest`: tutor nulo, vazio, com espaços, tabulação ou quebra de linha recusado. |
+
+Os testes adicionais seguem AAA e foram executados antes das correções: os quatro cenários de porte inválido e os cinco de tutor inválido falharam inicialmente. Depois das correções, os 12 novos cenários e os 26 testes anteriores passaram, totalizando 38 execuções. Os 20 testes recebidos permanecem intactos.
+
+A verificação HTTP da nova versão cobriu os dois casos em `BANHO`, `TOSA` e `CONSULTA`: entradas inválidas recebem 400 e não geram registros; os três portes válidos com tutor preenchido continuam sendo aceitos. Para carregar as alterações na execução aberta no IntelliJ, reiniciar `PetFiapApplication`.
