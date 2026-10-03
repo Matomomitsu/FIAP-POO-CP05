@@ -22,10 +22,10 @@ public class AgendaService {
         if (novo.getDataHora() == null || novo.getDataHora().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Data e hora devem ser informadas e nao podem estar no passado");
         }
-        List<Atendimento> doPet = repository.findByPetNome(novo.getPetNome());
-        for (Atendimento a : doPet) {
-            if (a.getPetNome().equals(novo.getPetNome()) && a.getDataHora().equals(novo.getDataHora())
-                    && "AGENDADO".equals(a.getStatus())) {
+        List<Atendimento> atendimentosDoPet = repository.findByPetNome(novo.getPetNome());
+        for (Atendimento existente : atendimentosDoPet) {
+            if (existente.getPetNome().equals(novo.getPetNome()) && existente.getDataHora().equals(novo.getDataHora())
+                    && "AGENDADO".equals(existente.getStatus())) {
                 throw new HorarioOcupadoException(
                         "Pet " + novo.getPetNome() + " ja possui atendimento agendado nesse horario");
             }
