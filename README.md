@@ -244,5 +244,3 @@ No Oracle, foram repetidas três disputas de agendamento e três de transição 
 ### Escopo da garantia e entrega
 
 A proteção de concorrência é para requisições atendidas pela mesma instância Spring, com um único bean `AgendaService`. O monitor é local à JVM e serializa as operações de escrita. Não é um bloqueio distribuído: executar múltiplas instâncias da API ou permitir gravações externas exigiria coordenação no banco, como locks e restrições adequadas. O protocolo também continua sendo local à execução, conforme a reflexão sobre Singleton. Nenhuma tabela, coluna ou dependência nova foi necessária para esta correção.
-
-O repositório foi renomeado para `cp5-bughunt-561565` e o remote `origin` atualizado. A entrega é individual. O link a enviar no Teams é https://github.com/Matomomitsu/cp5-bughunt-561565; o envio no Teams permanece uma etapa manual do integrante.
