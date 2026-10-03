@@ -2,6 +2,8 @@
 
 API de agendamentos de pet shop e clínica veterinária, desenvolvida em Java com Spring Boot e Spring Data JPA. O projeto recebido foi corrigido sem reescrever sua estrutura e sem adicionar dependências ao `pom.xml`.
 
+Repositório público: [cp5-bughunt-561565](https://github.com/Matomomitsu/cp5-bughunt-561565).
+
 ## Identificação
 
 **Grupo:** Entrega individual
@@ -14,10 +16,12 @@ API de agendamentos de pet shop e clínica veterinária, desenvolvida em Java co
 |---|---|
 | Bugs do enunciado corrigidos | 12 / 12 |
 | Validações adicionais corrigidas | 2 / 2 |
+| Problemas de concorrência corrigidos | 2 / 2, na instância Spring da aplicação |
 | Total de ajustes de Clean Code | 6 / 6 |
 | Testes novos do enunciado | 6 / 6 |
 | Testes das validações adicionais | 3 métodos parametrizados, 12 cenários |
-| Suíte final | 38 testes, 0 falhas, 0 erros, 0 ignorados |
+| Testes da revisão de cobertura e concorrência | 4 cenários unitários e 55 cenários HTTP/JPA |
+| Suíte final — `mvn verify` | 97 testes: 42 unitários + 55 de integração; nenhuma falha, erro ou teste ignorado |
 | Suíte original preservada | 20 testes, sem alterações |
 
 ## Parte 1 — Bugs encontrados
@@ -131,7 +135,7 @@ O bug12 mostrou o limite dos testes unitários: mesmo com todos verdes, foi nece
 
 ### Como executar os testes
 
-Requisitos: JDK 17 ou superior e Maven instalado. No Eclipse, importar a raiz como **Maven → Existing Maven Projects** e executar **Run As → JUnit Test** na pasta `src/test/java`.
+Requisitos: JDK 17 ou superior e Maven instalado. Importar a raiz como projeto Maven no IntelliJ ou no Eclipse. Para conferir a entrega inteira, executar `mvn verify` na raiz.
 
 ```sh
 mvn test
@@ -139,6 +143,12 @@ mvn verify
 ```
 
 A primeira execução do Maven pode baixar dependências. Depois de resolvidas, os testes unitários executam sem banco, sem rede e sem subir o Spring.
+
+- `mvn test`: executa os 42 testes unitários pelo Surefire.
+- `mvn verify`: executa os 42 unitários e os 55 testes de integração `*IT` pelo Failsafe, em outra JVM.
+- Os testes de integração sobem a API em porta aleatória e usam somente H2 em memória. Conferem o banco configurado antes de limpar os dados; não usam o Oracle nem suas credenciais.
+
+A separação também preserva o isolamento do teste original do Singleton, que exige os protocolos `1, 2, 3`. Não foi necessário editar os testes recebidos. O `pom.xml` ganhou apenas a execução do Failsafe; a versão é gerenciada pelo Spring Boot e nenhuma dependência foi acrescentada.
 
 ### Como executar a API sem Oracle
 
@@ -150,6 +160,8 @@ java -jar target/petfiap-0.0.1-SNAPSHOT.jar --server.port=8080 '--spring.datasou
 
 O banco dessa execução é temporário e seus dados não são mantidos após encerrar a aplicação. Para Oracle, fornecer as credenciais localmente por `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`. O arquivo versionado continua com `SEU_RM` e `SUA_SENHA`.
 
+Não enviar o `application.properties` local nem um JAR gerado com credenciais dentro dele. Os artefatos de `target/` não são versionados.
+
 Exemplo de agendamento com uma data futura calculada no momento da execução:
 
 ```powershell
@@ -160,16 +172,20 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/atendimentos/$($atendimento.id
 
 ### Evidências da entrega
 
-Verificação realizada com JDK 21.0.11 e Maven 3.9.15:
+Verificação final realizada em 03/10/2026 com JDK 21.0.11 e Maven 3.9.15:
 
 | Verificação | Resultado |
 |---|---|
 | Estado original | 20 testes, 9 falhas, 0 erros |
-| Estado final — `mvn test` | 38 testes, 0 falhas, 0 erros, 0 ignorados |
+| Estado final — `mvn test` | 42 testes unitários, 0 falhas, 0 erros, 0 ignorados |
+| Estado final — `mvn verify` | 42 unitários + 55 de integração = 97 testes, 0 falhas, 0 erros, 0 ignorados |
 | SHA-256 das sete classes de teste originais | Idênticos aos arquivos recebidos |
-| `pom.xml` e `application.properties` versionados | Preservados como recebidos; as credenciais locais não fazem parte dos commits |
+| `pom.xml` | Dependências originais preservadas; acrescentada apenas a execução do plugin Failsafe |
+| `application.properties` versionado | Preservado como recebido; as credenciais locais não fazem parte dos commits |
 | Histórico do enunciado | Primeiro commit do estado original; 12 commits `fix`, 6 `refactor` e 6 `test`, um por item |
 | Histórico das validações adicionais | 2 commits `fix` e 2 commits `test`, separados por caso |
+| Histórico da revisão de concorrência e cobertura | `fix: bug15/bug16` e `test: teste09` até `teste15`, separados das correções anteriores |
+| Nome público do repositório | `cp5-bughunt-561565`, conforme o formato da entrega individual |
 | API com H2 em memória | Inicialização e persistência reais verificadas na porta 18085 |
 | Nove criações válidas: três serviços × três portes | HTTP 201, IDs gerados, status `AGENDADO` e protocolos sequenciais |
 | Resumos dos nove atendimentos | Preços, pontos e durações conforme o contrato |
@@ -178,9 +194,12 @@ Verificação realizada com JDK 21.0.11 e Maven 3.9.15:
 | ID inexistente | HTTP 404 na busca, no resumo, na conclusão e no cancelamento |
 | Data passada, tipo inexistente, nome/porte vazios e data malformada | HTTP 400 |
 | API com Oracle | 60 verificações do contrato passaram; os 11 registros temporários da verificação foram removidos |
+| Revalidação sequencial com Oracle, antes das correções de concorrência | 131 verificações HTTP passaram; os 9 registros temporários foram removidos |
 | Novas validações na API com H2 | 48 verificações HTTP passaram: 27 entradas inválidas recusadas sem persistência e 9 criações válidas preservadas |
+| Concorrência na versão corrigida com Oracle | 18 pares simultâneos: 201/409 nos agendamentos e 200/409 nas transições, em banho, tosa e consulta; persistência conferida por JDBC |
+| Limpeza da revalidação concorrente com Oracle | 18 registros temporários removidos; ausência confirmada pelo banco e pela API |
 
-A API foi verificada com H2 e com Oracle. As duas validações adicionais foram verificadas na nova versão usando H2 em memória. A validação de data passada ficou em `AgendaService.agendar()`, onde o contrato exige recusa antes de acessar o banco, permitindo construir e consultar registros históricos.
+A API foi verificada com H2 e com Oracle. As verificações sequenciais e das entradas inválidas antecederam a revisão de concorrência; a versão corrigida também passou pelos testes concorrentes reais no Oracle e pela suíte de integração versionada com H2. A revalidação Oracle usou uma execução temporária na porta 18086, sem alteração do esquema (`ddl-auto=none`), e essa execução foi encerrada. A validação de data passada ficou em `AgendaService.agendar()`, onde o contrato exige recusa antes de acessar o banco, permitindo construir e consultar registros históricos.
 
 O histórico permite observar a evolução: as sete primeiras correções eliminaram as nove falhas originais; quatro testes novos revelaram quatro outros bugs; a revisão do mapeamento JPA e a chamada real à API confirmaram o bug12. Os dois testes novos que passaram de primeira foram mantidos para prevenir regressões.
 
@@ -196,3 +215,34 @@ Além dos 12 bugs do enunciado, a verificação com Oracle mostrou duas entradas
 Os testes adicionais seguem AAA e foram executados antes das correções: os quatro cenários de porte inválido e os cinco de tutor inválido falharam inicialmente. Depois das correções, os 12 novos cenários e os 26 testes anteriores passaram, totalizando 38 execuções. Os 20 testes recebidos permanecem intactos.
 
 A verificação HTTP da nova versão cobriu os dois casos em `BANHO`, `TOSA` e `CONSULTA`: entradas inválidas recebem 400 e não geram registros; os três portes válidos com tutor preenchido continuam sendo aceitos. Para carregar as alterações na execução aberta no IntelliJ, reiniciar `PetFiapApplication`.
+
+## Parte 6 — Revisão de concorrência e cobertura
+
+### Correções reproduzidas com Oracle
+
+| # | Sintoma confirmado antes da correção | Causa e correção | Testes de regressão |
+|---|---|---|---|
+| bug15 | Duas requisições simultâneas para o mesmo pet/horário retornavam 201 e gravavam dois atendimentos. | Consulta e `save()` eram independentes. `AgendaService.agendar()` passou a ser `synchronized`, mantendo consulta, validação e gravação no mesmo monitor do bean singleton. | `AgendaAgendamentoConcorrenciaTest` força a segunda chamada enquanto a primeira gravação está pendente; `AtendimentoAgendamentoConcorrenciaIT` confirma HTTP 201/409 e um único registro nos três tipos. |
+| bug16 | Conclusão e cancelamento simultâneos retornavam ambos 200, mas um estado sobrescrevia o outro. | Cada requisição podia ler uma cópia em `AGENDADO`. `concluir()` e `cancelar()` usam o mesmo monitor do serviço até terminar o `save()`, de modo que a segunda operação lê o estado já atualizado e retorna 409. | `AgendaTransicaoConcorrenciaTest` testa as duas ordens com cópias distintas; `AtendimentoTransicaoConcorrenciaIT` confirma HTTP 200/409 e preservação do vencedor no JPA. |
+
+Os testes unitários de concorrência foram executados antes das respectivas correções: um cenário de agendamento e dois de transição falharam. Depois das correções passaram. Usam barreiras, sinais e observação do bloqueio no serviço para controlar a disputa, sem depender de um `sleep` arbitrário. As requisições HTTP paralelas são liberadas por uma barreira comum e verificam também o estado persistido, sem assumir qual cliente vencerá.
+
+No Oracle, foram repetidas três disputas de agendamento e três de transição para cada serviço: 18 pares no total. Cada disputa teve exatamente um vencedor; houve vitórias tanto da conclusão quanto do cancelamento, com estado final consistente entre API e JDBC. Somente registros com prefixos exclusivos desta execução foram removidos; nenhum registro do usuário foi alterado.
+
+### Testes acrescentados nesta revisão
+
+| Commit | Classe | Cobertura |
+|---|---|---|
+| teste09 | `AgendaNomeContratoTest` | Nomes de mesmo valor em duas instâncias `new String("Rex")`; a tentativa deve ser recusada sem `save()`. Protege a regressão de `.equals()` para `==`. |
+| teste10 | `AgendaAgendamentoConcorrenciaTest` | Duas chamadas para o mesmo horário enquanto a primeira gravação ainda está pendente; somente uma gravação. |
+| teste11 | `AgendaTransicaoConcorrenciaTest` | Concluir/cancelar e cancelar/concluir simultaneamente; apenas a primeira transição grava. |
+| teste12 | `AtendimentoPersistenciaIT` | Nove combinações de serviço e porte, geração real de ID, dados preservados, buscas HTTP e resumos; configuração do Failsafe e suporte H2 compartilhado. |
+| teste13 | `AtendimentoErrosHttpIT` | 40 cenários de entradas inválidas, IDs inexistentes/malformados e conflito de horário; respostas 400/404/409 e ausência de persistência indevida. |
+| teste14 | `AtendimentoAgendamentoConcorrenciaIT` | Agendamentos HTTP simultâneos nos três serviços; respostas 201/409 e uma única linha persistida. |
+| teste15 | `AtendimentoTransicaoConcorrenciaIT` | Transições HTTP simultâneas nos três serviços; respostas 200/409, estado vencedor e recusa de repetições. |
+
+### Escopo da garantia e entrega
+
+A proteção de concorrência é para requisições atendidas pela mesma instância Spring, com um único bean `AgendaService`. O monitor é local à JVM e serializa as operações de escrita. Não é um bloqueio distribuído: executar múltiplas instâncias da API ou permitir gravações externas exigiria coordenação no banco, como locks e restrições adequadas. O protocolo também continua sendo local à execução, conforme a reflexão sobre Singleton. Nenhuma tabela, coluna ou dependência nova foi necessária para esta correção.
+
+O repositório foi renomeado para `cp5-bughunt-561565` e o remote `origin` atualizado. A entrega é individual. O link a enviar no Teams é https://github.com/Matomomitsu/cp5-bughunt-561565; o envio no Teams permanece uma etapa manual do integrante.
