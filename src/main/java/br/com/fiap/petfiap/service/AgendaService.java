@@ -21,8 +21,9 @@ public class AgendaService {
         this.repository = repository;
     }
 
-    // Agenda um novo atendimento: recusa horario ja ocupado pelo mesmo pet.
-    public Atendimento agendar(Atendimento novo) {
+    // No bean singleton, consulta, validacao e gravacao compartilham o mesmo monitor.
+    // A segunda requisicao so consulta depois de a primeira gravacao terminar.
+    public synchronized Atendimento agendar(Atendimento novo) {
         if (novo.getDataHora() == null || novo.getDataHora().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Data e hora devem ser informadas e nao podem estar no passado");
         }
