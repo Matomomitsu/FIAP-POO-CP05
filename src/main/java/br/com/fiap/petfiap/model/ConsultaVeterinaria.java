@@ -10,6 +10,9 @@ public class ConsultaVeterinaria extends Atendimento {
 
     public static final String TIPO = "CONSULTA";
 
+    private static final double PRECO_FIXO = 150.0;
+    private static final int PONTOS_FIDELIDADE = 50;
+
     public ConsultaVeterinaria() {
     }
 
@@ -24,11 +27,11 @@ public class ConsultaVeterinaria extends Atendimento {
 
     @Override
     public double calcularPreco() {
-        return 150.0;
+        return PRECO_FIXO;
     }
 
     @Override
     public int calcularPontosFidelidade() {
-        return 50;
+        return PONTOS_FIDELIDADE;
     }
 }
