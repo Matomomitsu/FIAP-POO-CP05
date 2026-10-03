@@ -241,6 +241,3 @@ No Oracle, foram repetidas três disputas de agendamento e três de transição 
 | teste14 | `AtendimentoAgendamentoConcorrenciaIT` | Agendamentos HTTP simultâneos nos três serviços; respostas 201/409 e uma única linha persistida. |
 | teste15 | `AtendimentoTransicaoConcorrenciaIT` | Transições HTTP simultâneas nos três serviços; respostas 200/409, estado vencedor e recusa de repetições. |
 
-### Escopo da garantia e entrega
-
-A proteção de concorrência é para requisições atendidas pela mesma instância Spring, com um único bean `AgendaService`. O monitor é local à JVM e serializa as operações de escrita. Não é um bloqueio distribuído: executar múltiplas instâncias da API ou permitir gravações externas exigiria coordenação no banco, como locks e restrições adequadas. O protocolo também continua sendo local à execução, conforme a reflexão sobre Singleton. Nenhuma tabela, coluna ou dependência nova foi necessária para esta correção.
