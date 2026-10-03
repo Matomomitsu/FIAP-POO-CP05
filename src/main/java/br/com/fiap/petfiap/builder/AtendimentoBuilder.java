@@ -4,10 +4,13 @@ import br.com.fiap.petfiap.factory.AtendimentoFactory;
 import br.com.fiap.petfiap.model.Atendimento;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 // Padrao Builder (Aula 14): monta um atendimento complexo passo a passo,
 // sem construtor gigante no controller.
 public class AtendimentoBuilder {
+
+    private static final Set<String> PORTES_VALIDOS = Set.of("PEQUENO", "MEDIO", "GRANDE");
 
     private String tipo;
     private String petNome;
@@ -43,6 +46,9 @@ public class AtendimentoBuilder {
         }
         if (petPorte == null || petPorte.isBlank()) {
             throw new IllegalArgumentException("Porte do pet obrigatorio");
+        }
+        if (!PORTES_VALIDOS.contains(petPorte)) {
+            throw new IllegalArgumentException("Porte do pet invalido: " + petPorte);
         }
         return AtendimentoFactory.criar(protocolo, tipo, petNome, petPorte, tutorNome, dataHora);
     }
