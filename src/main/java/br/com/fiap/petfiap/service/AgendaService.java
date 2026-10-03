@@ -44,15 +44,15 @@ public class AgendaService {
                 .orElseThrow(() -> new AtendimentoNaoEncontradoException("Atendimento nao encontrado: " + id));
     }
 
-    // Conclui o atendimento (status AGENDADO -> CONCLUIDO).
-    public Atendimento concluir(Long id) {
+    // As transicoes usam o mesmo monitor: leitura, validacao e save sao indivisiveis.
+    public synchronized Atendimento concluir(Long id) {
         Atendimento atendimento = buscarPorId(id);
         atendimento.concluir();
         return repository.save(atendimento);
     }
 
     // Cancela o atendimento (status AGENDADO -> CANCELADO).
-    public Atendimento cancelar(Long id) {
+    public synchronized Atendimento cancelar(Long id) {
         Atendimento atendimento = buscarPorId(id);
         atendimento.cancelar();
         return repository.save(atendimento);
