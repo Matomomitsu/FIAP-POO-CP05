@@ -39,7 +39,7 @@ public class AtendimentoBuilder {
         return this;
     }
 
-    // Valida os dados do pet antes de criar o atendimento.
+    // Valida os dados do pet e do tutor antes de criar o atendimento.
     public Atendimento construir(int protocolo) {
         if (petNome == null || petNome.isBlank()) {
             throw new IllegalArgumentException("Nome do pet obrigatorio");
@@ -49,6 +49,9 @@ public class AtendimentoBuilder {
         }
         if (!PORTES_VALIDOS.contains(petPorte)) {
             throw new IllegalArgumentException("Porte do pet invalido: " + petPorte);
+        }
+        if (tutorNome == null || tutorNome.isBlank()) {
+            throw new IllegalArgumentException("Nome do tutor obrigatorio");
         }
         return AtendimentoFactory.criar(protocolo, tipo, petNome, petPorte, tutorNome, dataHora);
     }
